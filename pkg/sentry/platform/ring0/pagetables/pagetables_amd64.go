@@ -41,15 +41,6 @@ const (
 	entriesPerPage = 512
 )
 
-// Init initializes a set of PageTables.
-//
-//go:nosplit
-func (p *PageTables) Init(allocator Allocator) {
-	p.Allocator = allocator
-	p.root = p.Allocator.NewPTEs()
-	p.rootPhysical = p.Allocator.PhysicalFor(p.root)
-}
-
 func pgdIndex(upperStart uintptr) uintptr {
 	if upperStart&(pgdSize-1) != 0 {
 		panic("upperStart should be pgd size aligned")
@@ -63,12 +54,14 @@ func pgdIndex(upperStart uintptr) uintptr {
 	panic("upperStart should be in canonical range")
 }
 
-// cloneUpperShared clone the upper from the upper shared page tables.
+// InitArch initializes a set of PageTables.
 //
 //go:nosplit
-func (p *PageTables) cloneUpperShared() {
-	start := pgdIndex(p.upperStart)
-	copy(p.root[start:entriesPerPage], p.upperSharedPageTables.root[start:entriesPerPage])
+func (p *PageTables) InitArch() {
+	if p.upperSharedPageTables != nil {
+		start := pgdIndex(p.upperStart)
+		copy(p.root[start:entriesPerPage], p.upperSharedPageTables.root[start:entriesPerPage])
+	}
 }
 
 // PTEs is a collection of entries.

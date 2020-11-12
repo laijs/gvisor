@@ -72,15 +72,21 @@ type PageTables struct {
 // precondition: upperSharedPageTables must be marked read-only shared.
 func NewWithUpper(a Allocator, upperSharedPageTables *PageTables, upperStart uintptr) *PageTables {
 	p := new(PageTables)
-	p.Init(a)
+
+	p.Allocator = allocator
+	p.root = p.Allocator.NewPTEs()
+	p.rootPhysical = p.Allocator.PhysicalFor(p.root)
+
 	if upperSharedPageTables != nil {
 		if !upperSharedPageTables.readOnlyShared {
 			panic("Only read-only shared pagetables can be used as upper")
 		}
 		p.upperSharedPageTables = upperSharedPageTables
 		p.upperStart = upperStart
-		p.cloneUpperShared()
 	}
+
+	p.InitArch()
+
 	return p
 }
 

@@ -42,24 +42,22 @@ const (
 	entriesPerPage = 512
 )
 
-// Init initializes a set of PageTables.
+// InitArch initializes a set of PageTables.
 //
 //go:nosplit
-func (p *PageTables) Init(allocator Allocator) {
-	p.Allocator = allocator
-	p.root = p.Allocator.NewPTEs()
-	p.rootPhysical = p.Allocator.PhysicalFor(p.root)
-}
+func (p *PageTables) InitArch() {
+	if p.upperSharedPageTables == nil {
+		p.archPageTables.root = p.Allocator.NewPTEs()
+		p.archPageTables.rootPhysical = p.Allocator.PhysicalFor(p.archPageTables.root)
+		return
+	}
 
-// cloneUpperShared clone the upper from the upper shared page tables.
-//
-//go:nosplit
-func (p *PageTables) cloneUpperShared() {
 	if p.upperStart != upperBottom {
 		panic("upperStart should be the same as upperBottom")
 	}
 
-	// nothing to do for arm.
+	p.archPageTables.root = p.upperSharedPageTables.archPageTables.root
+	p.archPageTables.rootPhysical = p.upperSharedPageTables.archPageTables.rootPhysical
 }
 
 // PTEs is a collection of entries.
